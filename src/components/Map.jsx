@@ -3,14 +3,19 @@ import L from 'leaflet';
 import 'leaflet-routing-machine';
 
 class Map extends React.Component {
-  constructor(props){
+  constructor(props) {
     super(props);
     this.state = {
       loaded: false
     };
   }
-  componentDidMount(){
-    let map = L.map('map');
+  componentDidMount() {
+    const map = L.map('map');
+    L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 12,
+      minZoom: 8
+    }).addTo(map);
     L.Routing.control({
       waypoints: [
         L.latLng(-2.15193, -79.95302),
@@ -19,14 +24,13 @@ class Map extends React.Component {
       router: new L.Routing.OSRMv1({
         serviceUrl: 'http://localhost:5000/route/v1'
       })
-}).addTo(map);
-
+    }).addTo(map);
   }
   render() {
-    return <div>
-      <div id="map"> </div>
-      
-    </div>;
+    return (<div>
+      <div id="map" />
+
+            </div>);
   }
 }
 
