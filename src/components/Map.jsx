@@ -89,6 +89,7 @@ class Map extends React.Component {
     const tileLayer = L.tileLayer(config.tileLayer.uri, config.tileLayer.params).addTo(map);
 
     this.setState({ map, tileLayer });
+    this.props.setMap(map);
   }
   render() {
     return (<div>

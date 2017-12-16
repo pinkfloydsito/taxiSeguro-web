@@ -1,11 +1,11 @@
 import React, { PropTypes } from 'react';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
-import Header from '../../components/Header';
-import LeftDrawer from '../../components/LeftDrawer';
-import Map from '../../components/Map';
+import Header from './Header';
+import LeftDrawer from './LeftDrawer';
 import withWidth, { LARGE, SMALL } from 'material-ui/utils/withWidth';
-import { Route } from 'react-router-dom';
-import ThemeDefault from '../../theme-default';
+import ThemeDefault from '../theme-default';
 
 class App extends React.Component {
   constructor(props) {
@@ -54,8 +54,7 @@ class App extends React.Component {
           />
 
           <div style={styles.container}>
-            {/* {this.props.children} */}
-            <Map />
+            { this.props.children }
           </div>
         </div>
       </MuiThemeProvider>);
