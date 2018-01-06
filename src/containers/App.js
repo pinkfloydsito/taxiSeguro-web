@@ -4,8 +4,17 @@ import { connect } from 'react-redux';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import Header from './Header';
 import LeftDrawer from './LeftDrawer';
+import Login from './Login';
 import withWidth, { LARGE, SMALL } from 'material-ui/utils/withWidth';
 import ThemeDefault from '../theme-default';
+
+
+// Actions
+import * as userActions from '../actions/userActions';
+
+const mapStateToProps = state => ({
+  user: state.user
+});
 
 class App extends React.Component {
   constructor(props) {
@@ -30,6 +39,7 @@ class App extends React.Component {
   render() {
     const { navDrawerOpen } = this.state;
     const paddingLeftDrawerOpen = 236;
+    let main_window = <Login/>;
 
     const styles = {
       header: {
@@ -40,24 +50,36 @@ class App extends React.Component {
         paddingLeft: navDrawerOpen && this.props.width !== SMALL ? paddingLeftDrawerOpen : 0
       }
     };
+
+    if (this.props.user && this.props.user.name) {
+      main_window =
+      (<div>
+        <Header
+          styles={styles.header}
+          handleChangeRequestNavDrawer={this.handleChangeRequestNavDrawer.bind(this)}
+        />
+
+        <LeftDrawer
+          navDrawerOpen={navDrawerOpen}
+          username="Sebastian :v"
+        />
+
+        <div style={styles.container}>
+          { this.props.children }
+        </div>
+       </div>);
+    } else {
+      console.info(this.props);
+    }
     return (
       <MuiThemeProvider muiTheme={ThemeDefault}>
-        <div>
-          <Header
-            styles={styles.header}
-            handleChangeRequestNavDrawer={this.handleChangeRequestNavDrawer.bind(this)}
-          />
-
-          <LeftDrawer
-            navDrawerOpen={navDrawerOpen}
-            username="Sebastian :v"
-          />
-
-          <div style={styles.container}>
-            { this.props.children }
-          </div>
-        </div>
+        {main_window}
       </MuiThemeProvider>);
   }
 }
-export default withWidth()(App);
+
+const mapDispatchToProps = dispatch => bindActionCreators(Object.assign({}, userActions), dispatch);
+export default withWidth()(connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(App));
