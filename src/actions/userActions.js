@@ -7,7 +7,7 @@
 //   }
 // });
 
-export const setUser = (user = { name: '', password: '' }) => ({
+export const setUser = (user={}) => ({
   type: 'SET_USER',
   payload: {
     user

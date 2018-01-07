@@ -39,7 +39,7 @@ class App extends React.Component {
   render() {
     const { navDrawerOpen } = this.state;
     const paddingLeftDrawerOpen = 236;
-    let main_window = <Login/>;
+    let main_window = null;
 
     const styles = {
       header: {
@@ -69,7 +69,9 @@ class App extends React.Component {
         </div>
        </div>);
     } else {
-      console.info(this.props);
+        main_window = (
+            <Login/>
+        )
     }
     return (
       <MuiThemeProvider muiTheme={ThemeDefault}>
