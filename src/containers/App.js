@@ -61,17 +61,19 @@ class App extends React.Component {
 
         <LeftDrawer
           navDrawerOpen={navDrawerOpen}
-          username="Sebastian :v"
+          username={this.props.user.name ? this.props.user.name : 'Error'}
         />
 
-        <div style={styles.container}>
-          { this.props.children }
+        <div style={styles.container} className="container-fluid">
+          <div className="row">
+            { this.props.children }
+          </div>
         </div>
        </div>);
     } else {
-        main_window = (
-            <Login/>
-        )
+      main_window = (
+        <Login />
+      );
     }
     return (
       <MuiThemeProvider muiTheme={ThemeDefault}>

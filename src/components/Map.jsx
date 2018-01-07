@@ -102,7 +102,7 @@ class Map extends React.Component {
   }
   render() {
     return (<div>
-      <div id="map" />
+      <div id="map" className="col-md-9"/>
             </div>
     );
   }

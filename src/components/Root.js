@@ -9,7 +9,10 @@ import { Route } from 'react-router';
 import { history } from '../store';
 import App from '../containers/App';
 import Map from '../containers/Map';
+import RouteList from '../containers/RouteList';
 import '../index.css'; // global css
+import '../Styles/bootstrap.min.css'; // bootstrap grid system css
+import '../Styles/bootstrap-theme.css'; // bootstrap grid system css
 
 injectTapEventPlugin();
 
@@ -20,7 +23,8 @@ const Root = ({ store }) => (
     <ConnectedRouter history={history}>
       <div>
         <App>
-          <Route path='/' component={Map} />
+          <Route path="/" component={Map} />
+          <Route path="/" component={RouteList} />
         </App>
       </div>
     </ConnectedRouter>
