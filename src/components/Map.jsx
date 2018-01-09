@@ -84,15 +84,17 @@ class Map extends React.Component {
     const map = L.map('map', config.params);
     L.control.zoom({ position: 'bottomleft' }).addTo(map);
     L.control.scale({ position: 'bottomleft' }).addTo(map);
-    L.Routing.control({
-      waypoints: [
-        L.latLng(-2.0678,-79.9280),
-        L.latLng(-2.1177,-79.9382)
-      ],
-      router: new L.Routing.OSRMv1({
-        serviceUrl: 'http://localhost:5000/route/v1'
-      })
-    }).addTo(map);
+    /* L.Routing.control({
+     *   waypoints: [
+     *     L.latLng(-2.0678,-79.9280),
+     *     L.latLng(-2.1177,-79.9382)
+     *   ],
+     *   router: new L.Routing.OSRMv1({
+     *     serviceUrl: 'http://localhost:5000/route/v1'
+     *   })
+     * }, {
+     *   showAlternative: true
+     * }).addTo(map);*/
 
     // a TileLayer is used as the "basemap"
     const tileLayer = L.tileLayer(config.tileLayer.uri, config.tileLayer.params).addTo(map);

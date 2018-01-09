@@ -13,3 +13,16 @@ export function auth(username, password) {
     }
   };
 }
+
+
+export function getActiveRoutes() {
+  return {
+    types: ['LOAD', 'AWESOME', 'OH_NO'],
+    payload: {
+      request: {
+          method: 'get',
+          url: '/routes/active',
+      },
+    }
+  };
+}
