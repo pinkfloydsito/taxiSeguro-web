@@ -3,9 +3,17 @@ import { Tabs, Tab } from 'material-ui/Tabs';
 import AppBar from 'material-ui/AppBar';
 import Checkbox from 'material-ui/Checkbox';
 import { List, ListItem } from 'material-ui/List';
+
 import L from 'leaflet';
 import 'leaflet-routing-machine';
 import { subscribeMonitor, socket } from '../registerSocket';
+
+// import { lineString } from '@turf/helpers';
+const lineString = require('@turf/helpers').lineString;
+const point = require('@turf/helpers').point;
+const multiPoint = require('@turf/helpers').multiPoint;
+const isPointInPolygon = require('@turf/boolean-point-in-polygon');
+const buffer = require('@turf/buffer').default;
 
 const SERVICE_URL = 'http://localhost:5000/route/v1';
 
@@ -20,7 +28,7 @@ class RouteList extends React.Component {
     this.addRouteToMap = this.addRouteToMap.bind(this);
     this.removeRouteFromMap = this.removeRouteFromMap.bind(this);
     subscribeMonitor();
-      socket.emit('sendInfo', {user: this.props.user})
+    socket.emit('sendInfo', { user: this.props.user });
   }
 
   componentWillMount() {
@@ -42,6 +50,7 @@ class RouteList extends React.Component {
       serviceUrl: SERVICE_URL
     });
     let line = null;
+      let polygon = null;
     const waypoints = [{ latLng: L.latLng(route.start.coordinates[1], route.start.coordinates[0]) }, { latLng: L.latLng(route.end.coordinates[1], route.end.coordinates[0]) }];
     router.route(waypoints, (err, routes) => {
       if (line) {
@@ -49,10 +58,35 @@ class RouteList extends React.Component {
       }
 
       if (err) {
-        alert(err);
+        console.error(err);
+        // alert(err);
       } else {
         line = L.Routing.line(routes[0]).addTo(this.props.map);
-        this.state.routesRendered.set(route._id, { line, router });
+        try {
+          const coordinates = route.points.coordinates.map((coordinate) => {
+              let _coordinate = [coordinate[0], coordinate[1]]
+            const tmp_lat = _coordinate[1];
+            _coordinate[1] = _coordinate[0];
+            _coordinate[0] = tmp_lat;
+            return _coordinate;
+          });
+          coordinates.unshift([route.start.coordinates[1], route.start.coordinates[0]]);
+          coordinates.push([route.end.coordinates[1], route.end.coordinates[0]]);
+          const linestring1 = lineString(coordinates);
+          const buffered = buffer(linestring1, 1, { units: 'kilometers' });
+            console.info(buffered)
+          const latlngs = buffered.geometry.coordinates;
+            polygon = L.polygon(latlngs, { color: 'blue', weight: 5, steps: 40 })
+            .addTo(this.props.map);
+        } catch (e) {
+          console.error('Something wrong happened, ', e);
+        }
+        const popup = L.popup()
+          .setLatLng(waypoints[0].latLng)
+          .setContent(`<p>Cliente: ${route.client.name} <br/>Conductor: ${route.driver.name} </p>`)
+          .openOn(this.props.map);
+        // Updating rendered routes in screen.
+          this.state.routesRendered.set(route._id, { line, router, popup, polygon });
       }
     });
   }
@@ -60,6 +94,8 @@ class RouteList extends React.Component {
   removeRouteFromMap(route) {
     const routeTmp = this.state.routesRendered.get(route._id);
     this.props.map.removeLayer(routeTmp.line);
+    this.props.map.removeLayer(routeTmp.popup);
+    this.props.map.removeLayer(routeTmp.polygon);
     // routeTmp.line.spliceWaypoints(0, 2);
     this.state.routesRendered.delete(route._id);
   }
