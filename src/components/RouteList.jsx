@@ -6,16 +6,29 @@ import { List, ListItem } from 'material-ui/List';
 
 import L from 'leaflet';
 import 'leaflet-routing-machine';
-import { subscribeMonitor, socket } from '../registerSocket';
+import { socket } from '../registerSocket';
+import driver from '../icons/driver.png';
+import client from '../icons/client.png';
 
-// import { lineString } from '@turf/helpers';
 const lineString = require('@turf/helpers').lineString;
-const point = require('@turf/helpers').point;
-const multiPoint = require('@turf/helpers').multiPoint;
-const isPointInPolygon = require('@turf/boolean-point-in-polygon');
 const buffer = require('@turf/buffer').default;
 
+
 const SERVICE_URL = 'http://localhost:5000/route/v1';
+const iconDriver = L.icon({
+  iconUrl: driver,
+  iconSize: [50, 95], // size of the icon
+  shadowSize: [50, 64], // size of the shadow
+  iconAnchor: [22, 94], // point of the icon which will correspond to marker's location
+  shadowAnchor: [4, 62], // the same for the shadow
+  popupAnchor: [-3, -76] // point from which the popup should open relative to the iconAnchor
+});
+const iconClient = L.icon({
+  iconUrl: client,
+  iconSize: [50, 95], // size of the icon
+  iconAnchor: [22, 94], // point of the icon which will correspond to marker's location
+  popupAnchor: [-3, -76] // point from which the popup should open relative to the iconAnchor
+});
 
 class RouteList extends React.Component {
   constructor(props) {
@@ -26,8 +39,11 @@ class RouteList extends React.Component {
     };
     this.handleCheck = this.handleCheck.bind(this);
     this.addRouteToMap = this.addRouteToMap.bind(this);
+    this.joinRoom = this.joinRoom.bind(this);
+    this.leaveRoom = this.leaveRoom.bind(this);
+    this.subscribeMonitor = this.subscribeMonitor.bind(this);
     this.removeRouteFromMap = this.removeRouteFromMap.bind(this);
-    subscribeMonitor();
+    this.subscribeMonitor();
     socket.emit('sendInfo', { user: this.props.user });
   }
 
@@ -50,7 +66,7 @@ class RouteList extends React.Component {
       serviceUrl: SERVICE_URL
     });
     let line = null;
-      let polygon = null;
+    let polygon = null;
     const waypoints = [{ latLng: L.latLng(route.start.coordinates[1], route.start.coordinates[0]) }, { latLng: L.latLng(route.end.coordinates[1], route.end.coordinates[0]) }];
     router.route(waypoints, (err, routes) => {
       if (line) {
@@ -64,7 +80,7 @@ class RouteList extends React.Component {
         line = L.Routing.line(routes[0]).addTo(this.props.map);
         try {
           const coordinates = route.points.coordinates.map((coordinate) => {
-              let _coordinate = [coordinate[0], coordinate[1]]
+            const _coordinate = [coordinate[0], coordinate[1]];
             const tmp_lat = _coordinate[1];
             _coordinate[1] = _coordinate[0];
             _coordinate[0] = tmp_lat;
@@ -74,9 +90,9 @@ class RouteList extends React.Component {
           coordinates.push([route.end.coordinates[1], route.end.coordinates[0]]);
           const linestring1 = lineString(coordinates);
           const buffered = buffer(linestring1, 1, { units: 'kilometers' });
-            console.info(buffered)
+          console.info(buffered);
           const latlngs = buffered.geometry.coordinates;
-            polygon = L.polygon(latlngs, { color: 'blue', weight: 5, steps: 40 })
+          polygon = L.polygon(latlngs, { color: 'blue', weight: 5, steps: 40 })
             .addTo(this.props.map);
         } catch (e) {
           console.error('Something wrong happened, ', e);
@@ -86,7 +102,17 @@ class RouteList extends React.Component {
           .setContent(`<p>Cliente: ${route.client.name} <br/>Conductor: ${route.driver.name} </p>`)
           .openOn(this.props.map);
         // Updating rendered routes in screen.
-          this.state.routesRendered.set(route._id, { line, router, popup, polygon });
+
+        const markerDriver = L.marker([route.end.coordinates[1], route.end.coordinates[0]], { icon: iconDriver })
+          .bindPopup(route.driver.name || '')
+          .addTo(this.props.map);
+
+        const markerClient = L.marker([route.start.coordinates[1], route.start.coordinates[0]], { icon: iconClient })
+          .bindPopup(route.driver.name || '')
+          .addTo(this.props.map);
+        this.state.routesRendered.set(route._id, {
+          line, router, popup, polygon, markerDriver, markerClient
+        });
       }
     });
   }
@@ -96,18 +122,52 @@ class RouteList extends React.Component {
     this.props.map.removeLayer(routeTmp.line);
     this.props.map.removeLayer(routeTmp.popup);
     this.props.map.removeLayer(routeTmp.polygon);
+    this.props.map.removeLayer(routeTmp.markerClient);
+    this.props.map.removeLayer(routeTmp.markerDriver);
     // routeTmp.line.spliceWaypoints(0, 2);
     this.state.routesRendered.delete(route._id);
+  }
+  joinRoom(route) {
+    this.state.socket.emit('JOIN_ROOM', route._id);
+    console.info(`Joining Room ${route._id}`);
+  }
+  leaveRoom(route) {
+    this.state.socket.emit('LEAVE_ROOM', route._id);
+    console.info(`Leaving Room ${route._id}`);
   }
   handleCheck(event, isInputChecked) {
     const routes = this.props.routes.filter(route => route._id == event.target.getAttribute('route_id'));
     if (isInputChecked) {
       if (routes.length === 1) {
         this.addRouteToMap(routes[0]);
+        this.joinRoom(routes[0]);
       }
     } else {
       this.removeRouteFromMap(routes[0]);
+      this.leaveRoom(routes[0]);
     }
+  }
+
+  subscribeMonitor() {
+    socket.on('POSITION_CLIENT', (data) => {
+        console.info('RECEIVING POSITION CLIENT');
+        console.info(this.state.routesRendered.get(data.route._id));
+    });
+
+    socket.on('POSITION_DRIVER', (data) => {
+        console.info('RECEIVING POSITION DRIVER');
+        console.info(this.state.routesRendered.get(data.route._id));
+    });
+
+    socket.on('ROUTE_ENDED', (data) => {
+        console.info('FINALIZO RUTA: ');
+        console.info(this.state.routesRendered.get(data.route._id));
+    });
+
+    socket.on('DANGER', (data) => {
+        console.info('RUTA: ');
+        console.info(this.state.routesRendered.get(data.route._id));
+    });
   }
 
   render() {

@@ -8,6 +8,7 @@
     "@turf/helpers": "^5.1.5",
     "axios": "^0.17.1",
     "dotenv-safe": "^4.0.4",
+    "drmonty-leaflet-awesome-markers": "^2.0.2",
     "history": "^4.7.2",
     "leaflet": "^1.2.0",
     "leaflet-routing-machine": "^3.2.7",
