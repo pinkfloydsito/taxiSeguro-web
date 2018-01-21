@@ -30,7 +30,7 @@ const iconClient = L.icon({
   popupAnchor: [-3, -76] // point from which the popup should open relative to the iconAnchor
 });
 
-class RouteList extends React.Component {
+export default class RouteList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -44,7 +44,7 @@ class RouteList extends React.Component {
     this.subscribeMonitor = this.subscribeMonitor.bind(this);
     this.removeRouteFromMap = this.removeRouteFromMap.bind(this);
     this.subscribeMonitor();
-    socket.emit('sendInfo', { user: this.props.user });
+    socket.emit('SENDINFO', { user: { ...this.props.user, role: 'monitor' } });
   }
 
   componentWillMount() {
@@ -150,23 +150,23 @@ class RouteList extends React.Component {
 
   subscribeMonitor() {
     socket.on('POSITION_CLIENT', (data) => {
-        console.info('RECEIVING POSITION CLIENT');
-        console.info(this.state.routesRendered.get(data.route._id));
+      console.info('RECEIVING POSITION CLIENT');
+      console.info(this.state.routesRendered.get(data.route._id));
     });
 
     socket.on('POSITION_DRIVER', (data) => {
-        console.info('RECEIVING POSITION DRIVER');
-        console.info(this.state.routesRendered.get(data.route._id));
+      console.info('RECEIVING POSITION DRIVER');
+      console.info(this.state.routesRendered.get(data.route._id));
     });
 
     socket.on('ROUTE_ENDED', (data) => {
-        console.info('FINALIZO RUTA: ');
-        console.info(this.state.routesRendered.get(data.route._id));
+      console.info('FINALIZO RUTA: ');
+      console.info(this.state.routesRendered.get(data.route._id));
     });
 
     socket.on('DANGER', (data) => {
-        console.info('RUTA: ');
-        console.info(this.state.routesRendered.get(data.route._id));
+      console.info('RUTA: ');
+      console.info(this.state.routesRendered.get(data.route._id));
     });
   }
 
@@ -198,5 +198,3 @@ class RouteList extends React.Component {
     );
   }
 }
-
-export default RouteList;
