@@ -44,7 +44,7 @@ export default class RouteList extends React.Component {
     this.subscribeMonitor = this.subscribeMonitor.bind(this);
     this.removeRouteFromMap = this.removeRouteFromMap.bind(this);
     this.subscribeMonitor();
-    socket.emit('SENDINFO', { user: { ...this.props.user, role: 'monitor' } });
+    socket.emit('SENDINFO', { ...this.props.user, role: 'monitor' });
   }
 
   componentWillMount() {
@@ -89,7 +89,7 @@ export default class RouteList extends React.Component {
           coordinates.unshift([route.start.coordinates[1], route.start.coordinates[0]]);
           coordinates.push([route.end.coordinates[1], route.end.coordinates[0]]);
           const linestring1 = lineString(coordinates);
-          const buffered = buffer(linestring1, 1, { units: 'kilometers' });
+          const buffered = buffer(linestring1, 5, { units: 'kilometers' });
           console.info(buffered);
           const latlngs = buffered.geometry.coordinates;
           polygon = L.polygon(latlngs, { color: 'blue', weight: 5, steps: 40 })
@@ -150,15 +150,26 @@ export default class RouteList extends React.Component {
 
   subscribeMonitor() {
     socket.on('ROUTE - POSITION CLIENT', (data) => {
-        const latLng = { latLng: L.latLng(data.position.latitude, data.position.longitude) };
-        this.state.routesRendered.get(data.routeId).markerClient.setLatLng(latLng.latLng);
+      const latLng = { latLng: L.latLng(data.position.latitude, data.position.longitude) };
+      this.state.routesRendered.get(data.routeId).markerClient.setLatLng(latLng.latLng);
     });
 
     socket.on('ROUTE - POSITION DRIVER', (data) => {
-        const latLng = { latLng: L.latLng(data.position.latitude, data.position.longitude) };
-        this.state.routesRendered.get(data.routeId).markerDriver.setLatLng(latLng.latLng);
+      const latLng = { latLng: L.latLng(data.position.latitude, data.position.longitude) };
+      this.state.routesRendered.get(data.routeId).markerDriver.setLatLng(latLng.latLng);
     });
 
+    socket.on('PANIC BUTTON', (data) => {
+      console.info('panic button', data);
+    });
+
+    socket.on('ROUTE - DANGER', (data) => {
+      console.info('Danger...', data);
+    });
+
+    socket.on('ROUTE - ACTIVE', (data) => {
+      console.info(data);
+    });
     socket.on('ROUTE_ENDED', (data) => {
       console.info('FINALIZO RUTA: ');
       console.info(this.state.routesRendered.get(data.route._id));
@@ -175,7 +186,7 @@ export default class RouteList extends React.Component {
     let routesRed = null;
     if (this.props.routes && Array.isArray(this.props.routes)) {
       routesGreen = this.props.routes
-        .filter(route => route.status === 'pending' || route.status === 'active')
+        .filter(route => route.status === 'active' || route.status === 'pending')
         .map(route =>
           (
             <ListItem
