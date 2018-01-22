@@ -19,7 +19,7 @@ const iconDriver = L.icon({
   iconUrl: driver,
   iconSize: [50, 95], // size of the icon
   shadowSize: [50, 64], // size of the shadow
-  iconAnchor: [22, 94], // point of the icon which will correspond to marker's location
+  iconAnchor: [22, 94], // point of the icon which will correspond to marker's locationa
   shadowAnchor: [4, 62], // the same for the shadow
   popupAnchor: [-3, -76] // point from which the popup should open relative to the iconAnchor
 });
@@ -127,14 +127,14 @@ export default class RouteList extends React.Component {
     // routeTmp.line.spliceWaypoints(0, 2);
     this.state.routesRendered.delete(route._id);
   }
+
   joinRoom(route) {
-    this.state.socket.emit('JOIN_ROOM', route._id);
-    console.info(`Joining Room ${route._id}`);
+    this.state.socket.emit('JOIN ROUTE', route._id);
   }
   leaveRoom(route) {
-    this.state.socket.emit('LEAVE_ROOM', route._id);
-    console.info(`Leaving Room ${route._id}`);
+    this.state.socket.emit('LEAVE ROUTE', route._id);
   }
+
   handleCheck(event, isInputChecked) {
     const routes = this.props.routes.filter(route => route._id == event.target.getAttribute('route_id'));
     if (isInputChecked) {
@@ -149,14 +149,14 @@ export default class RouteList extends React.Component {
   }
 
   subscribeMonitor() {
-    socket.on('POSITION_CLIENT', (data) => {
-      console.info('RECEIVING POSITION CLIENT');
-      console.info(this.state.routesRendered.get(data.route._id));
+    socket.on('ROUTE - POSITION CLIENT', (data) => {
+        const latLng = { latLng: L.latLng(data.position.latitude, data.position.longitude) };
+        this.state.routesRendered.get(data.routeId).markerClient.setLatLng(latLng.latLng);
     });
 
-    socket.on('POSITION_DRIVER', (data) => {
-      console.info('RECEIVING POSITION DRIVER');
-      console.info(this.state.routesRendered.get(data.route._id));
+    socket.on('ROUTE - POSITION DRIVER', (data) => {
+        const latLng = { latLng: L.latLng(data.position.latitude, data.position.longitude) };
+        this.state.routesRendered.get(data.routeId).markerDriver.setLatLng(latLng.latLng);
     });
 
     socket.on('ROUTE_ENDED', (data) => {
@@ -171,25 +171,48 @@ export default class RouteList extends React.Component {
   }
 
   render() {
-    let routesUI = null;
+    let routesGreen = null;
+    let routesRed = null;
     if (this.props.routes && Array.isArray(this.props.routes)) {
-      routesUI = this.props.routes.map(route => (<ListItem
-        key={route._id}
-        leftCheckbox={<Checkbox route_id={route._id} onCheck={this.handleCheck} />}
-        primaryText={route.driver ? `Conductor: ${route.driver.name}` : 'No asignado'}
-        secondaryText={route.client ? `Cliente: ${route.client.name}` : 'No asignado'}
-      />));
+      routesGreen = this.props.routes
+        .filter(route => route.status === 'pending' || route.status === 'active')
+        .map(route =>
+          (
+            <ListItem
+              key={route._id}
+              leftCheckbox={<Checkbox route_id={route._id} onCheck={this.handleCheck} />}
+              primaryText={route.driver ? `Conductor: ${route.driver.name}` : 'No asignado'}
+              secondaryText={route.client ? `Cliente: ${route.client.name}` : 'No asignado'}
+            />));
+
+      routesRed = this.props.routes
+        .filter(route => route.status === 'danger')
+        .map(route =>
+          (
+            <ListItem
+              key={route._id}
+              leftCheckbox={<Checkbox route_id={route._id} onCheck={this.handleCheck} />}
+              primaryText={route.driver ? `Conductor: ${route.driver.name}` : 'No asignado'}
+              secondaryText={route.client ? `Cliente: ${route.client.name}` : 'No asignado'}
+            />));
     }
     return (<div className="col-md-3">
       <AppBar
-        title="Rutas Activas"
+        title="Estado de Rutas"
         iconClassNameLeft="muidocs-icon-action-home"
       />
       <Tabs>
         <Tab label="Verdes">
           <div>
             <List>
-              { routesUI || 'No generado' }
+              { routesGreen || 'No generado' }
+            </List>
+          </div>
+        </Tab>
+        <Tab label="ROJO">
+          <div>
+            <List>
+              { routesRed || 'No generado' }
             </List>
           </div>
         </Tab>

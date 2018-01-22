@@ -4,8 +4,14 @@ import AppBar from 'material-ui/AppBar';
 import IconButton from 'material-ui/IconButton';
 import Menu from 'material-ui/svg-icons/navigation/menu';
 import { white } from 'material-ui/styles/colors';
+import NotificationsIcon from 'material-ui/svg-icons/social/notifications';
+import Badge from 'material-ui/Badge';
 
 class Header extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
   render() {
     /* const { styles, handleChangeRequestNavDrawer } = this.props; */
     const styles = this.props.styles;
@@ -35,6 +41,14 @@ class Header extends React.Component {
               <Menu color={white} />
             </IconButton>
               }
+          iconElementRight={
+            <Badge
+              badgeContent={this.props.notifications && Array.isArray(this.props.notifications) ? this.props.notifications.length : 0}
+              primary
+            >
+              <NotificationsIcon />
+            </Badge>
+          }
         />
       </div>
     );
