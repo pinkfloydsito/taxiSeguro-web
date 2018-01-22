@@ -151,13 +151,13 @@ export default class RouteList extends React.Component {
           position: 'br',
           autoDismiss: 1
         });
-        /* 
+        /*
          *         try {
          *           const nodo = this.refs.routesRed.props.children.find(node => node.key === routes[0]._id);
          *           console.info(ReactDOM.findDOMNode(this.refs.routesRed));
          *         } catch (e) {
          *           console.error('Something wrong happened, ', e);
-         *         }*/
+         *         } */
       }
     } else {
       this.removeRouteFromMap(routes[0]);
@@ -178,7 +178,6 @@ export default class RouteList extends React.Component {
 
     socket.on('PANIC BUTTON', (data) => {
       console.info('panic button', data);
-
       this.state.notificationSystem.addNotification({
         message: 'Boton de Panico Activado en Ruta',
         level: 'error',
@@ -189,14 +188,43 @@ export default class RouteList extends React.Component {
 
     socket.on('ROUTE - DANGER', (data) => {
       try {
-        const route = this.props.routes.find(_route => _route._id === data.routeId);
+        if (data.outofBuffer === true) {
+          const route = this.props.routes.find(_route => _route._id === data.routeId);
+          route.status = 'danger';
+          this.forceUpdate(); // refresh the UI
+          this.state.notificationSystem.addNotification({
+            title: 'ABANDONO DE CERCO',
+            level: 'error',
+            position: 'tr',
+            autoDismiss: 5,
+            children: (
+              <div>
+                <h2>CONDUCTOR</h2>
+                <p>NOMBRE: {route.driver.name}</p>
+                <p>TELEFONO: {route.driver.mobile}</p>
+                <h2>CLIENTE</h2>
+                <p>NOMBRE: {route.client.name}</p>
+                <p>TELEFONO: {route.client.mobile}</p>
+              </div>
+            )
+          });
+        }
+      } catch (e) {
+        console.error('Something wrong happened, ', e);
+      }
+    });
+
+    socket.on('ROUTE - ACTIVE', (data) => {
+      try {
+        const route = data.route;
+        route.client = data.client;
+        route.driver = data.driver;
         route.status = 'danger';
         this.forceUpdate(); // refresh the UI
         this.state.notificationSystem.addNotification({
-          title: 'PELIGRO',
-          level: 'error',
+          title: 'NUEVA TURA ACTIVA',
+          level: 'sucess',
           position: 'tr',
-          autoDismiss: 2,
           children: (
             <div>
               <h2>CONDUCTOR</h2>
@@ -213,20 +241,21 @@ export default class RouteList extends React.Component {
       }
     });
 
-    socket.on('ROUTE - ACTIVE', (data) => {
-    });
-
     socket.on('ROUTE - INACTIVE', (data) => {
-      const routeTmp = this.state.routesRendered.get(data.route._id);
-      this.props.map.removeLayer(routeTmp.line);
-      this.props.map.removeLayer(routeTmp.popup);
-      this.props.map.removeLayer(routeTmp.polygon);
-      this.props.map.removeLayer(routeTmp.markerClient);
-      this.props.map.removeLayer(routeTmp.markerDriver);
-      // routeTmp.line.spliceWaypoints(0, 2);
-      this.state.routesRendered.delete(data.route._id);
-      this.leaveRoom(data.route._id);
-      this.props.removeRoute(data.route._id);
+      try {
+        const routeTmp = this.state.routesRendered.get(data.route._id);
+        this.props.map.removeLayer(routeTmp.line);
+        this.props.map.removeLayer(routeTmp.popup);
+        this.props.map.removeLayer(routeTmp.polygon);
+        this.props.map.removeLayer(routeTmp.markerClient);
+        this.props.map.removeLayer(routeTmp.markerDriver);
+        // routeTmp.line.spliceWaypoints(0, 2);
+        this.state.routesRendered.delete(data.route._id);
+        this.leaveRoom(data.route._id);
+        this.props.removeRoute(data.route._id);
+      } catch (e) {
+        console.error('Something wrong happened, ', e);
+      }
     });
   }
   render() {
@@ -250,7 +279,7 @@ export default class RouteList extends React.Component {
           (
             <ListItem
               key={route._id}
-              leftCheckbox={<Checkbox route_id={route._id} onCheck={this.handleCheck} />}
+              leftCheckbox={<Checkbox route_id={route._id} onCheck={this.handleCheck} data-routeid={route._id} />}
               primaryText={route.driver ? `Conductor: ${route.driver.name}` : 'No asignado'}
               secondaryText={route.client ? `Cliente: ${route.client.name}` : 'No asignado'}
             />));
