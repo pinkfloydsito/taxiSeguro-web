@@ -1,8 +1,10 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { Tabs, Tab } from 'material-ui/Tabs';
 import AppBar from 'material-ui/AppBar';
 import Checkbox from 'material-ui/Checkbox';
 import { List, ListItem } from 'material-ui/List';
+import Message from 'material-ui/svg-icons/communication/message';
 
 import L from 'leaflet';
 import 'leaflet-routing-machine';
@@ -12,7 +14,7 @@ import client from '../icons/client.png';
 
 const lineString = require('@turf/helpers').lineString;
 const buffer = require('@turf/buffer').default;
-
+const NotificationSystem = require('react-notification-system');
 
 const SERVICE_URL = 'http://localhost:5000/route/v1';
 const iconDriver = L.icon({
@@ -35,7 +37,8 @@ export default class RouteList extends React.Component {
     super(props);
     this.state = {
       routesRendered: new Map(),
-      socket
+      socket,
+      notificationSystem: null
     };
     this.handleCheck = this.handleCheck.bind(this);
     this.addRouteToMap = this.addRouteToMap.bind(this);
@@ -56,10 +59,11 @@ export default class RouteList extends React.Component {
   }
 
   componentDidMount() {
+    this.setState({
+      notificationSystem: this.refs.notificationSystem
+    });
   }
 
-  componentWillUnmount() {
-  }
 
   addRouteToMap(route) {
     const router = new L.Routing.OSRMv1({
@@ -141,6 +145,19 @@ export default class RouteList extends React.Component {
       if (routes.length === 1) {
         this.addRouteToMap(routes[0]);
         this.joinRoom(routes[0]);
+        this.state.notificationSystem.addNotification({
+          title: 'Mostrando ruta',
+          level: 'success',
+          position: 'br',
+          autoDismiss: 1
+        });
+        /* 
+         *         try {
+         *           const nodo = this.refs.routesRed.props.children.find(node => node.key === routes[0]._id);
+         *           console.info(ReactDOM.findDOMNode(this.refs.routesRed));
+         *         } catch (e) {
+         *           console.error('Something wrong happened, ', e);
+         *         }*/
       }
     } else {
       this.removeRouteFromMap(routes[0]);
@@ -161,26 +178,57 @@ export default class RouteList extends React.Component {
 
     socket.on('PANIC BUTTON', (data) => {
       console.info('panic button', data);
+
+      this.state.notificationSystem.addNotification({
+        message: 'Boton de Panico Activado en Ruta',
+        level: 'error',
+        position: 'tr',
+        autoDismiss: 2
+      });
     });
 
     socket.on('ROUTE - DANGER', (data) => {
-      console.info('Danger...', data);
+      try {
+        const route = this.props.routes.find(_route => _route._id === data.routeId);
+        route.status = 'danger';
+        this.forceUpdate(); // refresh the UI
+        this.state.notificationSystem.addNotification({
+          title: 'PELIGRO',
+          level: 'error',
+          position: 'tr',
+          autoDismiss: 2,
+          children: (
+            <div>
+              <h2>CONDUCTOR</h2>
+              <p>NOMBRE: {route.driver.name}</p>
+              <p>TELEFONO: {route.driver.mobile}</p>
+              <h2>CLIENTE</h2>
+              <p>NOMBRE: {route.client.name}</p>
+              <p>TELEFONO: {route.client.mobile}</p>
+            </div>
+          )
+        });
+      } catch (e) {
+        console.error('Something wrong happened, ', e);
+      }
     });
 
     socket.on('ROUTE - ACTIVE', (data) => {
-      console.info(data);
-    });
-    socket.on('ROUTE_ENDED', (data) => {
-      console.info('FINALIZO RUTA: ');
-      console.info(this.state.routesRendered.get(data.route._id));
     });
 
-    socket.on('DANGER', (data) => {
-      console.info('RUTA: ');
-      console.info(this.state.routesRendered.get(data.route._id));
+    socket.on('ROUTE - INACTIVE', (data) => {
+      const routeTmp = this.state.routesRendered.get(data.route._id);
+      this.props.map.removeLayer(routeTmp.line);
+      this.props.map.removeLayer(routeTmp.popup);
+      this.props.map.removeLayer(routeTmp.polygon);
+      this.props.map.removeLayer(routeTmp.markerClient);
+      this.props.map.removeLayer(routeTmp.markerDriver);
+      // routeTmp.line.spliceWaypoints(0, 2);
+      this.state.routesRendered.delete(data.route._id);
+      this.leaveRoom(data.route._id);
+      this.props.removeRoute(data.route._id);
     });
   }
-
   render() {
     let routesGreen = null;
     let routesRed = null;
@@ -215,19 +263,20 @@ export default class RouteList extends React.Component {
       <Tabs>
         <Tab label="Verdes">
           <div>
-            <List>
+            <List ref="routesGreen">
               { routesGreen || 'No generado' }
             </List>
           </div>
         </Tab>
         <Tab label="ROJO">
           <div>
-            <List>
+            <List ref="routesRed">
               { routesRed || 'No generado' }
             </List>
           </div>
         </Tab>
       </Tabs>
+      <NotificationSystem ref="notificationSystem" />
     </div>
     );
   }
