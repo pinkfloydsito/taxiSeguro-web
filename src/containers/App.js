@@ -1,4 +1,5 @@
-import React, { PropTypes } from 'react';
+import React from 'react';
+import { PropTypes } from 'prop-types';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
@@ -39,7 +40,7 @@ class App extends React.Component {
   render() {
     const { navDrawerOpen } = this.state;
     const paddingLeftDrawerOpen = 236;
-    let main_window = null;
+    let mainWindow = null;
 
     const styles = {
       header: {
@@ -52,7 +53,7 @@ class App extends React.Component {
     };
 
     if (this.props.user && this.props.user.name) {
-      main_window =
+      mainWindow =
       (<div>
         <Header
           styles={styles.header}
@@ -71,16 +72,20 @@ class App extends React.Component {
         </div>
        </div>);
     } else {
-      main_window = (
+      mainWindow = (
         <Login />
       );
     }
     return (
       <MuiThemeProvider muiTheme={ThemeDefault}>
-        {main_window}
+        {mainWindow}
       </MuiThemeProvider>);
   }
 }
+
+App.propTypes = {
+  width: PropTypes.number.isRequired,
+};
 
 const mapDispatchToProps = dispatch => bindActionCreators(Object.assign({}, userActions), dispatch);
 export default withWidth()(connect(

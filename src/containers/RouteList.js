@@ -1,7 +1,7 @@
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 // Component
-import RouteList from '../components/RouteList';
+import RouteList from '../components/RouteList/RouteList';
 
 // Actions
 import * as mapActions from '../actions/mapActions';

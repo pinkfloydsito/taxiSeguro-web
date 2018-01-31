@@ -41,14 +41,14 @@ class Header extends React.Component {
               <Menu color={white} />
             </IconButton>
               }
-          iconElementRight={
-            <Badge
+          /* iconElementRight={
+              <Badge
               badgeContent={this.props.notifications && Array.isArray(this.props.notifications) ? this.props.notifications.length : 0}
               primary
-            >
+              >
               <NotificationsIcon />
-            </Badge>
-          }
+              </Badge>
+              } */
         />
       </div>
     );

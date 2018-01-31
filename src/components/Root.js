@@ -1,10 +1,10 @@
+import 'typeface-roboto';
+
 import React from 'react';
-import { render } from 'react-dom';
 import { Provider } from 'react-redux';
 import { ConnectedRouter } from 'react-router-redux';
 import injectTapEventPlugin from 'react-tap-event-plugin';
 import PropTypes from 'prop-types';
-import 'typeface-roboto';
 import { Route } from 'react-router';
 import { history } from '../store';
 import App from '../containers/App';
