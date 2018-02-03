@@ -217,7 +217,6 @@ export default class RouteList extends React.Component {
         const route = this.props.routes.find(_route => _route._id === data.routeId);
         if (data.outofBuffer === false && route.status === 'danger') { // INGRESO A CERCO
           route.status = 'active';
-          console.info('ingresando al buffer');
           this.forceUpdate(); // refresh the UI
         } else if (data.outofBuffer === true && route.status !== 'danger') { // ABANDONO DE CERCO
           route.status = 'danger';
@@ -225,7 +224,7 @@ export default class RouteList extends React.Component {
           this.state.notificationSystem.addNotification({
             title: 'ABANDONO DE CERCO',
             level: 'error',
-            position: 'tr',
+            position: 'tl',
             autoDismiss: 5,
             children: (
               <div>
@@ -247,18 +246,16 @@ export default class RouteList extends React.Component {
     });
 
     socket.on('ROUTE - ACTIVE', (data) => {
-      console.info('Ruta activa');
       try {
         const route = data.route;
         route.client = data.client;
         route.driver = data.driver;
         route.status = 'active';
-        this.props.setRoutes(...this.props.routes, route);
-        this.forceUpdate(); // refresh the UI
+        this.props.setRoutes([...this.props.routes, route]);
         this.state.notificationSystem.addNotification({
           title: 'NUEVA TURA ACTIVA',
-          level: 'sucess',
-          position: 'tr',
+          level: 'success',
+          position: 'br',
           children: (
             <div>
               <h2>CONDUCTOR</h2>
@@ -312,16 +309,16 @@ export default class RouteList extends React.Component {
     try {
       this.state.socket.emit('ROUTE - CHAT', { ...this.state.selectedChat, message });
 
-        message = {...message, position : 'right'};
+      message = { ...message, position: 'right' };
       // datasource feed
       const routeId = this.state.selectedChat.route_id;
       const role = this.state.selectedChat.role;
-        const dupleRouteChat = this.state.chat.get([routeId, role].toString());
+      const dupleRouteChat = this.state.chat.get([routeId, role].toString());
       if (!dupleRouteChat) {
-          this.state.chat.set([routeId, role].toString(), []);
+        this.state.chat.set([routeId, role].toString(), []);
       }
-        this.state.chat.get([routeId, role].toString()).push(message);
-        this.forceUpdate();
+      this.state.chat.get([routeId, role].toString()).push(message);
+      this.forceUpdate();
     } catch (e) {
       console.error('Something wrong happened, ', e);
     }
@@ -332,7 +329,7 @@ export default class RouteList extends React.Component {
       selectedChat: { ...this.state.selectedChat, route_id: routeId, role }
     }, () => {
       this.state.chat.get([this.state.selectedChat.route_id,
-                           this.state.selectedChat.role].toString()).push(message);
+        this.state.selectedChat.role].toString()).push(message);
     });
   }
 
@@ -406,16 +403,13 @@ export default class RouteList extends React.Component {
             }
           }
           return (
-            <div>
-              <ListItem
-                key={route._id}
-                leftCheckbox={checkbox}
-                primaryText={route.driver ? `Conductor: ${route.driver.name}` : 'No asignado'}
-                secondaryText={route.client ? `Cliente: ${route.client.name}` : 'No asignado'}
-                rightIcon={<CommunicationChatBubble />}
-              />
-              <FlatButton label="Default" />
-            </div>
+            <ListItem
+              key={route._id}
+              leftCheckbox={checkbox}
+              primaryText={route.driver ? `Conductor: ${route.driver.name}` : 'No asignado'}
+              secondaryText={route.client ? `Cliente: ${route.client.name}` : 'No asignado'}
+              rightIcon={<CommunicationChatBubble />}
+            />
           );
         });
     }
@@ -425,14 +419,14 @@ export default class RouteList extends React.Component {
         iconClassNameLeft="muidocs-icon-action-home"
       />
       <Tabs>
-        <Tab label="Verdes">
+        <Tab label="ACTIVAS">
           <div>
             <List ref="routesGreen">
               { routesGreen || 'No generado' }
             </List>
           </div>
         </Tab>
-        <Tab label="ROJO">
+        <Tab label="PELIGRANDO">
           <div>
             <List ref="routesRed">
               { routesRed || 'No generado' }
