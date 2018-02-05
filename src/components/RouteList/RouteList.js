@@ -14,6 +14,7 @@ import { service_url as SERVICE_URL } from '../../config/vars';
 import { iconDriver, iconClient } from './assets';
 import { UserChooserDialog } from './UserChooserDialog';
 import { ChatboxDialog } from './Chatbox';
+import { InfoDialog } from './InfoDialog';
 import './styles.css';
 import { getActiveRoutes } from '../../actions/axiosActions';
 
@@ -39,7 +40,10 @@ export default class RouteList extends React.Component {
       ChatboxDialog: {
         open: false,
         title: 'Chat'
-      }
+      },
+      infoDialog: {
+        open: false
+      },
     };
     this.routeListCheckbox = {}
     /*
@@ -78,6 +82,10 @@ export default class RouteList extends React.Component {
 
   handleCloseChatboxDialog() {
     this.setState({ ChatboxDialog: { ...this.state.ChatboxDialog, open: false } });
+  }
+
+  handleCloseInfoDialog() {
+    this.setState({ infoDialog: { ...this.state.infoDialog, open: false } });
   }
 
   handleClientChat(evt) {
@@ -312,6 +320,15 @@ export default class RouteList extends React.Component {
       }
     });
 
+    socket.on('ROUTE - CHAT ERROR', (data) => {
+      this.state.chat.get([data.route_id, data.role].toString()).pop();
+      this.setState({
+        infoDialog: { ...this.state.infoDialog, open: true }
+      });
+
+      this.forceUpdate();
+    });
+
     socket.on('ROUTE CHANGE - RESULT', async (status, route) => {
       if (status === 'ok') {
         const supersededRoute = {
@@ -374,6 +391,7 @@ export default class RouteList extends React.Component {
     context.handleClickChatIcon = this.handleClickChatIcon.bind(this);
     context.handleCloseMessageDialog = this.handleCloseMessageDialog.bind(this);
     context.handleCloseChatboxDialog = this.handleCloseChatboxDialog.bind(this);
+    context.handleCloseInfoDialog = this.handleCloseInfoDialog.bind(this);
     context.handleClientChat = this.handleClientChat.bind(this);
     context.handleDriverChat = this.handleDriverChat.bind(this);
     context.sendMessage = this.sendMessage.bind(this);
@@ -482,6 +500,10 @@ export default class RouteList extends React.Component {
         messages={this.state.chat
 .get([this.state.selectedChat.route_id,
 this.state.selectedChat.role].toString())}
+      />
+      <InfoDialog
+        open={this.state.infoDialog.open}
+        handleClose={this.handleCloseInfoDialog}
       />
     </div>
     );
