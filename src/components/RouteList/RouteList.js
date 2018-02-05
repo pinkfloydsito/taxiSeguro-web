@@ -312,8 +312,9 @@ export default class RouteList extends React.Component {
       }
     });
 
-    socket.on('ROUTE - CHAT', (data) => {
+    socket.on('ROUTE - CHAT RECEIVE', (data) => {
       try {
+        console.info(data);
         this.handleReceiveMessage(data.route_id, data.role, data.message);
       } catch (e) {
         console.error('Something wrong happened, ', e);
@@ -349,6 +350,7 @@ export default class RouteList extends React.Component {
 
   sendMessage(evt) {
     let message = {
+      from: this.props.user._id,
       position: 'left',
       type: 'text',
       text: evt.target.value,
@@ -376,8 +378,18 @@ export default class RouteList extends React.Component {
     this.setState({
       selectedChat: { ...this.state.selectedChat, route_id: routeId, role }
     }, () => {
-      this.state.chat.get([this.state.selectedChat.route_id,
-        this.state.selectedChat.role].toString()).push(message);
+      try {
+        if (!this.state.chat.get([this.state.selectedChat.route_id,
+          this.state.selectedChat.role].toString())) {
+          this.state.chat.set([this.state.selectedChat.route_id,
+            this.state.selectedChat.role].toString(), []);
+        }
+        this.state.chat.get([this.state.selectedChat.route_id,
+          this.state.selectedChat.role].toString()).push(message);
+          this.forceUpdate();
+      } catch (e) {
+        console.error('Something wrong happened, ', e);
+      }
     });
   }
 
@@ -458,8 +470,15 @@ export default class RouteList extends React.Component {
               leftCheckbox={checkbox}
               primaryText={route.driver ? `Conductor: ${route.driver.name}` : 'No asignado'}
               secondaryText={route.client ? `Cliente: ${route.client.name}` : 'No asignado'}
-              rightIcon={<CommunicationChatBubble />}
-            />
+            >
+              <IconButton
+                onClick={this.handleClickChatIcon}
+                route_id={route._id}
+                className="iconbutton-custom"
+              >
+                <CommunicationChatBubble />
+              </IconButton>
+            </ListItem>
           );
         });
     }

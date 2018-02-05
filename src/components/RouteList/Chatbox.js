@@ -29,11 +29,10 @@ export const ChatboxDialog = ({
       open={open}
       onRequestClose={this.handleClose}
     >
-
       <MessageList
         className="message-list"
-        lockable
         toBottomHeight="100%"
+          downButton={true}
         dataSource={messages || []}
       />
 
