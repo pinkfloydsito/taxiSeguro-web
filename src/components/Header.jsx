@@ -127,7 +127,12 @@ class Header extends React.Component {
 
                                 }
             >
+              <div
+              className="iconMenu_notifications"
+                  >
+
               { this.props.notifications.length > 0 ? notificationItems : emptyNotification }
+              </div>
             </IconMenu>
               }
         />

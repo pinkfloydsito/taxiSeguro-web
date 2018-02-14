@@ -128,7 +128,7 @@ export default class RouteList extends React.Component {
     const routes = this.props.routes.filter(route => route._id == event.target.getAttribute('route_id'));
     if (isInputChecked) {
       const routeRendered = this.props.routesRendered[event.target.getAttribute('route_id')];
-      this.routeListCheckbox[event.target.getAttribute('route_id')] = true
+      this.routeListCheckbox[event.target.getAttribute('route_id')] = true;
       if (routeRendered) {
         return;
       }
@@ -143,7 +143,7 @@ export default class RouteList extends React.Component {
         });
       }
     } else {
-      this.routeListCheckbox[event.target.getAttribute('route_id')] = false
+      this.routeListCheckbox[event.target.getAttribute('route_id')] = false;
       this.removeRouteFromMap(routes[0]);
       this.leaveRoom(routes[0]);
     }
@@ -197,6 +197,13 @@ export default class RouteList extends React.Component {
         } else if (data.outofBuffer === true && route.status !== 'danger') { // ABANDONO DE CERCO
           route.status = 'danger';
           this.forceUpdate(); // refresh the UI
+      this.props.addNotification({
+          sendBy: "Ruta peligrando",
+        position: route.position,
+        client: route.client,
+        driver: route.driver,
+        routeId: route._id
+      });
           this.state.notificationSystem.addNotification({
             title: 'ABANDONO DE CERCO',
             level: 'error',
@@ -282,13 +289,24 @@ export default class RouteList extends React.Component {
       if (status === 'ok') {
         const supersededRoute = {
           _id: route.supersededRoute
-        }
-        const routeCheckboxChecked = this.routeListCheckbox[route.supersededRoute];
-        this.props.removeRoute(route.supersededRoute);
-        this.props.setRoutes([...this.props.routes, route]);
-        if (routeCheckboxChecked) {
+        };
+
+        try {
+          const id_checkbox = `checkbox_${route.supersededRoute}`;
+          let checkbox = document.getElementById(id_checkbox);
+          const checked = checkbox.checked;
+
           this.removeRouteFromMap(supersededRoute);
-          this.addRouteToMap(route);
+          this.props.removeRoute(route.supersededRoute);
+          this.props.setRoutes([...this.props.routes, route]);
+          if (checked) {
+            checkbox = document.getElementById(`checkbox_${route._id}`);
+            checkbox.click();
+          } else {
+            // added route... not visible...
+          }
+        } catch (e) {
+          console.error('Something wrong happened, ', e);
         }
       }
     });
@@ -364,7 +382,7 @@ export default class RouteList extends React.Component {
         .filter(route => route.status === 'active' || route.status === 'pending')
         .map((route) => {
           const checkbox = (<Checkbox
-                            id={"checkbox_" + route._id}
+            id={`checkbox_${route._id}`}
             route_id={route._id}
             onClick={(e) => {
                   e.stopPropagation();
@@ -396,7 +414,7 @@ export default class RouteList extends React.Component {
         .filter(route => route.status === 'danger')
         .map((route) => {
           const checkbox = (<Checkbox
-          id={"checkbox_" + route._id}
+            id={`checkbox_${route._id}`}
             route_id={route._id}
             onClick={(e) => {
                   e.stopPropagation();

@@ -27,16 +27,16 @@ export const UserChooserDialog = ({
     >
       <div className="container-fluid">
         <div className="row">
-          <div className="col-md-6">
+          <div className="col-md-12">
             <IconButton onClick={handleClientChat}>
               <FontIcon className="material-icons">person pin</FontIcon>
             </IconButton>
           </div>
-          <div className="col-md-6">
-            <IconButton onClick={handleDriverChat}>
+          {/* <div className="col-md-6">
+              <IconButton onClick={handleDriverChat}>
               <FontIcon className="material-icons">directions bus</FontIcon>
-            </IconButton>
-          </div>
+              </IconButton>
+              </div> */}
         </div>
       </div>
     </Dialog>
