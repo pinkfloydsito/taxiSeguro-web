@@ -6355,6 +6355,10 @@ reduce-function-call@^1.0.1:
   dependencies:
     balanced-match "^0.4.2"
 
+redux-async-connect@^1.0.0-rc4:
+  version "1.0.0-rc4"
+  resolved "https://registry.yarnpkg.com/redux-async-connect/-/redux-async-connect-1.0.0-rc4.tgz#a22cd737b54486cf8826aa05a65937aea721ff4c"
+
 redux-axios-middleware@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/redux-axios-middleware/-/redux-axios-middleware-4.0.0.tgz#81951c3d9adce6f83ef892fd1568571cebe4a336"

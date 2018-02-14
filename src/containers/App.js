@@ -11,10 +11,11 @@ import ThemeDefault from '../theme-default';
 
 
 // Actions
-import * as userActions from '../actions/userActions';
+import * as userActions from '../modules/auth';
 
 const mapStateToProps = state => ({
-  user: state.user
+    auth: state.auth,
+  user: state.auth.user
 });
 
 class App extends React.Component {
@@ -52,7 +53,8 @@ class App extends React.Component {
       }
     };
 
-    if (this.props.user && this.props.user.name) {
+      if (this.props.user
+          && this.props.user.name) {
       mainWindow =
       (<div>
         <Header

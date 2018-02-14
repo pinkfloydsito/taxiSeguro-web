@@ -4,14 +4,13 @@ import { connect } from 'react-redux';
 import Login from '../components/Login';
 
 // Actions
-import * as userActions from '../actions/userActions';
-import * as axiosActions from '../actions/axiosActions';
+import * as authActions from '../modules/auth';
 
 const mapStateToProps = state => ({
-  user: state.user
+  auth: state.auth
 });
 
-const mapDispatchToProps = dispatch => bindActionCreators(Object.assign({}, userActions, axiosActions), dispatch);
+const mapDispatchToProps = dispatch => bindActionCreators(Object.assign({}, authActions), dispatch);
 export default connect(
   mapStateToProps,
   mapDispatchToProps

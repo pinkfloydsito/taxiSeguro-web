@@ -4,13 +4,19 @@ import { connect } from 'react-redux';
 import LeftDrawer from '../components/LeftDrawer';
 
 // Actions
-import * as mapActions from '../actions/mapActions';
+import * as mapActions from '../modules/map';
+import * as authActions from '../modules/auth';
 
 const mapStateToProps = state => ({
-  map: state.map
+  map: state.map,
+  user: state.auth.user
 });
 
-const mapDispatchToProps = dispatch => bindActionCreators(Object.assign({}, mapActions), dispatch);
+const mapDispatchToProps = dispatch => bindActionCreators(Object.assign(
+  {},
+  mapActions,
+  authActions
+), dispatch);
 export default connect(
   mapStateToProps,
   mapDispatchToProps

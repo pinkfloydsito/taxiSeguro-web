@@ -4,7 +4,7 @@ import thunk from 'redux-thunk';
 import createHistory from 'history/createBrowserHistory';
 import axios from 'axios';
 import axiosMiddleware from 'redux-axios-middleware';
-import rootReducer from './reducers';
+import rootReducer from './modules/reducer';
 
 export const history = createHistory();
 

@@ -7,6 +7,7 @@ import Avatar from 'material-ui/Avatar';
 
 const LeftDrawer = (props) => {
   const { navDrawerOpen } = props;
+  const { user } = props;
 
   const styles = {
     logo: {
@@ -51,14 +52,9 @@ const LeftDrawer = (props) => {
       open={navDrawerOpen}
     >
       <div style={styles.logo}>
-          Material Admin
+        {user.name}
       </div>
       <div style={styles.avatar.div}>
-        <Avatar
-          src="http://www.material-ui.com/images/uxceo-128.jpg"
-          size={50}
-          style={styles.avatar.icon}
-        />
         <span style={styles.avatar.span}>{props.username}</span>
       </div>
       <div>
@@ -69,8 +65,6 @@ const LeftDrawer = (props) => {
 
 LeftDrawer.propTypes = {
   navDrawerOpen: PropTypes.bool,
-  /* menus: PropTypes.array,
-   * username: PropTypes.string, */
 };
 
 export default LeftDrawer;

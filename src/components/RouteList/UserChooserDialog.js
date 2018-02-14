@@ -5,7 +5,9 @@ import FlatButton from 'material-ui/FlatButton';
 import FontIcon from 'material-ui/FontIcon';
 import IconButton from 'material-ui/IconButton';
 
-export const UserChooserDialog = ({ title, open, handleClose, handleClientChat, handleDriverChat }) => {
+export const UserChooserDialog = ({
+  title, open, handleClose, handleClientChat, handleDriverChat
+}) => {
   const actions = [
     <FlatButton
       label="Cancelar"
@@ -26,7 +28,7 @@ export const UserChooserDialog = ({ title, open, handleClose, handleClientChat, 
       <div className="container-fluid">
         <div className="row">
           <div className="col-md-6">
-          <IconButton onClick={handleClientChat}>
+            <IconButton onClick={handleClientChat}>
               <FontIcon className="material-icons">person pin</FontIcon>
             </IconButton>
           </div>
@@ -42,14 +44,14 @@ export const UserChooserDialog = ({ title, open, handleClose, handleClientChat, 
 };
 
 UserChooserDialog.propTypes = {
-    title: PropTypes.string,
-    open: PropTypes.Boolean,
-  handleClose: PropTypes.func.required,
-    handleClientChat: PropTypes.func.required,
-  handleDriverChat: PropTypes.func.required
+  title: PropTypes.string,
+  open: PropTypes.bool,
+  handleClose: PropTypes.func.isRequired,
+  handleClientChat: PropTypes.func.isRequired,
+  handleDriverChat: PropTypes.func.isRequired
 };
 
 UserChooserDialog.defaultProps = {
   title: 'SELECCIONE EL USUARIO',
-    open: false,
+  open: false,
 };

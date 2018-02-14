@@ -16,7 +16,6 @@ import { UserChooserDialog } from './UserChooserDialog';
 import { ChatboxDialog } from './Chatbox';
 import { InfoDialog } from './InfoDialog';
 import './styles.css';
-import { getActiveRoutes } from '../../actions/axiosActions';
 
 const lineString = require('@turf/helpers').lineString;
 const buffer = require('@turf/buffer').default;
@@ -28,7 +27,6 @@ export default class RouteList extends React.Component {
     const socket = io('http://localhost:9000', { reconnect: true });
     super(props);
     this.state = {
-      routesRendered: new Map(),
       socket,
       notificationSystem: null,
       chat: new Map(),
@@ -45,7 +43,7 @@ export default class RouteList extends React.Component {
         open: false
       },
     };
-    this.routeListCheckbox = {}
+    this.routeListCheckbox = {};
     /*
         chat structure: [route_id, role] --> messages... That is the structure.
        */
@@ -53,11 +51,7 @@ export default class RouteList extends React.Component {
   }
 
   componentWillMount() {
-    this.props.getActiveRoutes().then((data) => {
-      this.props.setRoutes(data.payload.data);
-    }).catch((e) => {
-      console.error(e);
-    });
+    this.props.getActiveRoutes();
   }
 
   componentDidMount() {
@@ -69,7 +63,8 @@ export default class RouteList extends React.Component {
 
 
   handleClickChatIcon(event) {
-    const route = this.props.routes.find(_route => _route._id == event.target.getAttribute('route_id'));
+    console.info(event.currentTarget);
+    const route = this.props.routes.find(_route => _route._id == event.currentTarget.getAttribute('route_id'));
     this.setState({
       messageDialog: { ...this.state.messageDialog, open: true },
       selectedChat: { ...this.state.selectedChat, route_id: route._id }
@@ -104,70 +99,19 @@ export default class RouteList extends React.Component {
     const router = new L.Routing.OSRMv1({
       serviceUrl: SERVICE_URL
     });
-    let line = null;
-    let polygon = null;
-    const waypoints = [{ latLng: L.latLng(route.start.coordinates[1], route.start.coordinates[0]) }, { latLng: L.latLng(route.end.coordinates[1], route.end.coordinates[0]) }];
-    router.route(waypoints, (err, routes) => {
-      if (line) {
-        this.props.map.removeLayer(line);
-      }
-
-      if (err) {
-        console.error(err);
-        // alert(err);
-      } else {
-        
-        if (routes.length > 1)
-          line = L.Routing.line(routes[route.route_index]).addTo(this.props.map);
-        else
-          line = L.Routing.line(routes[0]).addTo(this.props.map);
-        try {
-          const coordinates = route.points.coordinates.map((coordinate) => {
-            const _coordinate = [coordinate[0], coordinate[1]];
-            const tmp_lat = _coordinate[1];
-            _coordinate[1] = _coordinate[0];
-            _coordinate[0] = tmp_lat;
-            return _coordinate;
-          });
-          coordinates.unshift([route.start.coordinates[1], route.start.coordinates[0]]);
-          coordinates.push([route.end.coordinates[1], route.end.coordinates[0]]);
-          const linestring1 = lineString(coordinates);
-          const buffered = buffer(linestring1, 1, { units: 'kilometers' });
-          const latlngs = buffered.geometry.coordinates;
-          polygon = L.polygon(latlngs, { color: 'blue', weight: 3, steps: 40 })
-            .addTo(this.props.map);
-        } catch (e) {
-          console.error('Something wrong happened, ', e);
-        }
-        const popup = L.popup()
-          .setLatLng(waypoints[0].latLng)
-          .setContent(`<p>Cliente: ${route.client.name} <br/>Conductor: ${route.driver.name} </p>`)
-          .openOn(this.props.map);
-        // Updating rendered routes in screen.
-
-        const markerDriver = L.marker([route.end.coordinates[1], route.end.coordinates[0]], { icon: iconDriver })
-          .bindPopup(route.driver.name || '')
-          .addTo(this.props.map);
-
-        const markerClient = L.marker([route.start.coordinates[1], route.start.coordinates[0]], { icon: iconClient })
-          .bindPopup(route.driver.name || '')
-          .addTo(this.props.map);
-        this.state.routesRendered.set(route._id, {
-          line, router, popup, polygon, markerDriver, markerClient
-        });
-      }
-    });
+    this.props.addRenderedRoute(
+      router,
+      route._id,
+      route,
+      this.props.map,
+      iconDriver,
+      iconClient
+    );
   }
 
   removeRouteFromMap(route) {
     try {
-      const routeTmp = this.state.routesRendered.get(route._id);
-      this.props.map.removeLayer(routeTmp.line);
-      this.props.map.removeLayer(routeTmp.popup);
-      this.props.map.removeLayer(routeTmp.polygon);
-      this.props.map.removeLayer(routeTmp.markerClient);
-      this.props.map.removeLayer(routeTmp.markerDriver);
-      this.state.routesRendered.delete(route._id);
+      this.props.deleteRenderedRoute(this.props.map, route._id);
     } catch (e) {
       console.error('Something wrong happened, ', e);
     }
@@ -183,10 +127,10 @@ export default class RouteList extends React.Component {
   handleCheck(event, isInputChecked) {
     const routes = this.props.routes.filter(route => route._id == event.target.getAttribute('route_id'));
     if (isInputChecked) {
-      let routeRendered = this.state.routesRendered.get(event.target.getAttribute('route_id'))
+      const routeRendered = this.props.routesRendered[event.target.getAttribute('route_id')];
       this.routeListCheckbox[event.target.getAttribute('route_id')] = true
       if (routeRendered) {
-        return 
+        return;
       }
       if (routes.length === 1) {
         this.addRouteToMap(routes[0]);
@@ -211,25 +155,33 @@ export default class RouteList extends React.Component {
     });
 
     socket.on('ROUTE - POSITION CLIENT', (data) => {
-      console.info('route client');
       const latLng = { latLng: L.latLng(data.position.latitude, data.position.longitude) };
-      const routeRendered = this.state.routesRendered.get(data.routeId)
-      if (routeRendered) 
-        routeRendered.markerClient.setLatLng(latLng.latLng);
+      const routeRendered = this.props.routesRendered[data.routeId];
+      if (routeRendered) { routeRendered.markerClient.setLatLng(latLng.latLng); }
     });
 
     socket.on('ROUTE - POSITION DRIVER', (data) => {
-      console.info('route driver');
       const latLng = { latLng: L.latLng(data.position.latitude, data.position.longitude) };
-      const routeRendered = this.state.routesRendered.get(data.routeId)
-      if (routeRendered) 
-        routeRendered.markerDriver.setLatLng(latLng.latLng);
+      const routeRendered = this.props.routesRendered[data.routeId];
+      if (routeRendered) { routeRendered.markerDriver.setLatLng(latLng.latLng); }
     });
 
     socket.on('PANIC BUTTON', (data) => {
-      console.info('panic button', data);
+      const route = this.props.routes.find(_route => _route._id == data.route_id);
+      if (!route) {
+        console.error('cannot send pannic button');
+        return;
+      }
+
+      this.props.addNotification({
+        sendBy: data.role,
+        position: route.position,
+        client: route.client,
+        driver: route.driver,
+        routeId: route._id
+      });
       this.state.notificationSystem.addNotification({
-        message: 'Boton de Panico Activado en Ruta',
+        message: 'Boton de Panico Activado en ruta',
         level: 'error',
         position: 'tr',
         autoDismiss: 2
@@ -300,13 +252,7 @@ export default class RouteList extends React.Component {
       const route = data.route;
       console.info('removing route', data);
       try {
-        const routeTmp = this.state.routesRendered.get(route._id);
-        this.props.map.removeLayer(routeTmp.line);
-        this.props.map.removeLayer(routeTmp.popup);
-        this.props.map.removeLayer(routeTmp.polygon);
-        this.props.map.removeLayer(routeTmp.markerClient);
-        this.props.map.removeLayer(routeTmp.markerDriver);
-        this.state.routesRendered.delete(route._id);
+        this.props.deleteRenderedRoute(this.props.map, route._id);
         this.leaveRoom(route._id);
         this.props.removeRoute(route._id);
       } catch (e) {
@@ -386,7 +332,7 @@ export default class RouteList extends React.Component {
         }
         this.state.chat.get([this.state.selectedChat.route_id,
           this.state.selectedChat.role].toString()).push(message);
-          this.forceUpdate();
+        this.forceUpdate();
       } catch (e) {
         console.error('Something wrong happened, ', e);
       }
@@ -417,35 +363,16 @@ export default class RouteList extends React.Component {
       routesGreen = this.props.routes
         .filter(route => route.status === 'active' || route.status === 'pending')
         .map((route) => {
-          let checkbox
-          if (this.routeListCheckbox[route.supersededRoute] == true){
-            this.routeListCheckbox[route._id] = true
-            checkbox = (<Checkbox
-              route_id={route._id}
-              defaultChecked
-              onClick={(e) => {
-                    e.stopPropagation();
-                    this.handleCheck(e, e.target.checked);
-              }}
-            />);
-          }
-          else {
-            this.routeListCheckbox[route._id] = false
-            checkbox = (<Checkbox
-              route_id={route._id}
-              onClick={(e) => {
-                    e.stopPropagation();
-                    this.handleCheck(e, e.target.checked);
-              }}
-            />);
-          }
-           
-          
-          if (this.state.routesRendered.get(route._id) && this.props.map) {
-            if (this.props.map.hasLayer(this.state.routesRendered.get(route._id).line)) {
-              checkbox = <Checkbox route_id={route._id} onCheck={this.handleCheck} defaultChecked />;
-            }
-          }
+          const checkbox = (<Checkbox
+                            id={"checkbox_" + route._id}
+            route_id={route._id}
+            onClick={(e) => {
+                  e.stopPropagation();
+                  this.handleCheck(e, e.target.checked);
+    }}
+          />);
+          this.routeListCheckbox[checkbox.props.route_id] = checkbox;
+
           return (
             <ListItem
               key={route._id}
@@ -468,18 +395,15 @@ export default class RouteList extends React.Component {
       routesRed = this.props.routes
         .filter(route => route.status === 'danger')
         .map((route) => {
-          let checkbox = (<Checkbox
+          const checkbox = (<Checkbox
+          id={"checkbox_" + route._id}
             route_id={route._id}
             onClick={(e) => {
                   e.stopPropagation();
                   this.handleCheck(e, e.target.checked);
     }}
           />);
-          if (this.state.routesRendered.get(route._id) && this.props.map) {
-            if (this.props.map.hasLayer(this.state.routesRendered.get(route._id).line)) {
-              checkbox = <Checkbox route_id={route._id} onCheck={this.handleCheck} defaultChecked />;
-            }
-          }
+
           return (
             <ListItem
               key={route._id}

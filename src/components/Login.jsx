@@ -18,23 +18,11 @@ class Login extends React.Component {
 
   componentDidMount() {
     // Usar esto en desarrollo
-    this.props.auth('user3', '123456').then((message) => {
-      this.props.setUser(message.payload.data);
-    }).catch((e) => {
-      console.error(e);
-    });
-  }
-
-  componentWillUnmount() {
+    this.props.login('user3', '123456')
   }
 
   handleClick(event) {
-    this.props.auth(this.state.username, this.state.password).then((message) => {
-      this.props.setUser(message.payload.data);
-    }).catch((e) => {
-      console.error(e);
-      alert('El usuario no existe')
-    });
+    this.props.login(this.state.username, this.state.password)
   }
 
   render() {
