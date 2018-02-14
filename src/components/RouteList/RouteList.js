@@ -134,7 +134,7 @@ export default class RouteList extends React.Component {
           const linestring1 = lineString(coordinates);
           const buffered = buffer(linestring1, 1, { units: 'kilometers' });
           const latlngs = buffered.geometry.coordinates;
-          polygon = L.polygon(latlngs, { color: 'blue', weight: 5, steps: 40 })
+          polygon = L.polygon(latlngs, { color: 'blue', weight: 3, steps: 40 })
             .addTo(this.props.map);
         } catch (e) {
           console.error('Something wrong happened, ', e);
@@ -184,6 +184,7 @@ export default class RouteList extends React.Component {
     const routes = this.props.routes.filter(route => route._id == event.target.getAttribute('route_id'));
     if (isInputChecked) {
       let routeRendered = this.state.routesRendered.get(event.target.getAttribute('route_id'))
+      this.routeListCheckbox[event.target.getAttribute('route_id')] = true
       if (routeRendered) {
         return 
       }
@@ -198,6 +199,7 @@ export default class RouteList extends React.Component {
         });
       }
     } else {
+      this.routeListCheckbox[event.target.getAttribute('route_id')] = false
       this.removeRouteFromMap(routes[0]);
       this.leaveRoom(routes[0]);
     }
@@ -335,15 +337,13 @@ export default class RouteList extends React.Component {
         const supersededRoute = {
           _id: route.supersededRoute
         }
-        this.removeRouteFromMap(supersededRoute)
+        const routeCheckboxChecked = this.routeListCheckbox[route.supersededRoute];
         this.props.removeRoute(route.supersededRoute);
         this.props.setRoutes([...this.props.routes, route]);
-        this.addRouteToMap(route)
-        // console.info('Routes checkbox: ', this.routeListCheckbox)
-        // const routeCheckbox = this.routeListCheckbox[route._id]
-        // if (!routeCheckbox.props.checked) {
-        //   routeCheckbox.setAttribute('checked', true)
-        // } 
+        if (routeCheckboxChecked) {
+          this.removeRouteFromMap(supersededRoute);
+          this.addRouteToMap(route);
+        }
       }
     });
   }
@@ -417,14 +417,30 @@ export default class RouteList extends React.Component {
       routesGreen = this.props.routes
         .filter(route => route.status === 'active' || route.status === 'pending')
         .map((route) => {
-          let checkbox = (<Checkbox
-            route_id={route._id}
-            onClick={(e) => {
-                  e.stopPropagation();
-                  this.handleCheck(e, e.target.checked);
-    }}
-          />);
-          this.routeListCheckbox[checkbox.props.route_id] = checkbox
+          let checkbox
+          if (this.routeListCheckbox[route.supersededRoute] == true){
+            this.routeListCheckbox[route._id] = true
+            checkbox = (<Checkbox
+              route_id={route._id}
+              defaultChecked
+              onClick={(e) => {
+                    e.stopPropagation();
+                    this.handleCheck(e, e.target.checked);
+              }}
+            />);
+          }
+          else {
+            this.routeListCheckbox[route._id] = false
+            checkbox = (<Checkbox
+              route_id={route._id}
+              onClick={(e) => {
+                    e.stopPropagation();
+                    this.handleCheck(e, e.target.checked);
+              }}
+            />);
+          }
+           
+          
           if (this.state.routesRendered.get(route._id) && this.props.map) {
             if (this.props.map.hasLayer(this.state.routesRendered.get(route._id).line)) {
               checkbox = <Checkbox route_id={route._id} onCheck={this.handleCheck} defaultChecked />;
