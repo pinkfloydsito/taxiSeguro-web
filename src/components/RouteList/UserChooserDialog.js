@@ -32,11 +32,11 @@ export const UserChooserDialog = ({
               <FontIcon className="material-icons">person pin</FontIcon>
             </IconButton>
           </div>
-          {/* <div className="col-md-6">
+          <div className="col-md-6">
               <IconButton onClick={handleDriverChat}>
               <FontIcon className="material-icons">directions bus</FontIcon>
               </IconButton>
-              </div> */}
+              </div> 
         </div>
       </div>
     </Dialog>

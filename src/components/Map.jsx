@@ -43,34 +43,9 @@ class Map extends React.Component {
     /*
         Fetch routes info to load into the map...
        */
-    // this.fetchRoutes();
     if (!this.state.map) {
       this.init();
     }
-    // const map = L.map('map');
-    // this.setState({ map });
-    // if ('geolocation' in navigator) {
-    //   L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-    //     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-    //     maxZoom: 10,
-    //     minZoom: 5
-    //   }).addTo(map);
-
-    //   // L.Routing.control({
-    //   //   waypoints: [
-    //   //     L.latLng(-2.15193, -79.95302),
-    //   //     L.latLng(-2.15192, -76.949)
-    //   //   ],
-    //   //   router: new L.Routing.OSRMv1({
-    //   //     serviceUrl: 'http://localhost:5000/route/v1'
-    //   //   })
-    //   // }).addTo(map);
-    //   // this.setState({
-    //   //   isGeolocated: true
-    //   // });
-    // } else {
-    //   console.error('Geolocation not available');
-    // }
   }
 
   componentWillUnmount() {
@@ -84,17 +59,6 @@ class Map extends React.Component {
     const map = L.map('map', config.params);
     L.control.zoom({ position: 'bottomleft' }).addTo(map);
     L.control.scale({ position: 'bottomleft' }).addTo(map);
-    /* L.Routing.control({
-     *   waypoints: [
-     *     L.latLng(-2.0678,-79.9280),
-     *     L.latLng(-2.1177,-79.9382)
-     *   ],
-     *   router: new L.Routing.OSRMv1({
-     *     serviceUrl: 'http://localhost:5000/route/v1'
-     *   })
-     * }, {
-     *   showAlternative: true
-     * }).addTo(map);*/
 
     // a TileLayer is used as the "basemap"
     const tileLayer = L.tileLayer(config.tileLayer.uri, config.tileLayer.params).addTo(map);
