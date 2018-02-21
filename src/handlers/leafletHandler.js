@@ -12,7 +12,17 @@ export const addRouteToMap = (router, route, map, iconDriver, iconClient) => {
   let markerClient = null;
 
   return new Promise((resolve, reject) => {
-    const waypoints = [{ latLng: L.latLng(route.start.coordinates[1], route.start.coordinates[0]) }, { latLng: L.latLng(route.end.coordinates[1], route.end.coordinates[0]) }];
+    let waypoints = null
+    if (route.waypoints) {
+      waypoints = route.waypoints.coordinates.map( (wp) => {
+        const waypoint = {
+          latLng: L.latLng(wp[1], wp[0])
+        };
+        return waypoint 
+      });
+    } else {
+      waypoints = [{ latLng: L.latLng(route.start.coordinates[1], route.start.coordinates[0]) }, { latLng: L.latLng(route.end.coordinates[1], route.end.coordinates[0]) }];
+    }
     router.route(waypoints, (err, routes) => {
       if (line) {
         map.removeLayer(line);
