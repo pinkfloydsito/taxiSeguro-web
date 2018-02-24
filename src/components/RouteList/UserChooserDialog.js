@@ -29,11 +29,13 @@ export const UserChooserDialog = ({
         <div className="row">
           <div className="col-md-12">
             <IconButton onClick={handleClientChat}>
+          CLIENTE
               <FontIcon className="material-icons">person pin</FontIcon>
             </IconButton>
           </div>
           <div className="col-md-6">
               <IconButton onClick={handleDriverChat}>
+          CONDUCTOR
               <FontIcon className="material-icons">directions bus</FontIcon>
               </IconButton>
               </div> 

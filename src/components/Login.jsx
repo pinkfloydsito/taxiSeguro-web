@@ -22,7 +22,7 @@ class Login extends React.Component {
 
   componentDidMount() {
     // Usar esto en desarrollo
-    // this.props.login('user3', '123456')
+    this.props.login('user3', '123456')
   }
 
   handleClick(event) {

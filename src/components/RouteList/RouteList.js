@@ -6,6 +6,7 @@ import Checkbox from 'material-ui/Checkbox';
 import CommunicationChatBubble from 'material-ui/svg-icons/communication/chat-bubble';
 import IconButton from 'material-ui/IconButton';
 import { List, ListItem } from 'material-ui/List';
+import ActionInfo from 'material-ui/svg-icons/action/info';
 
 import L from 'leaflet';
 import 'leaflet-routing-machine';
@@ -15,6 +16,7 @@ import { iconDriver, iconClient } from './assets';
 import { UserChooserDialog } from './UserChooserDialog';
 import { ChatboxDialog } from './Chatbox';
 import { InfoDialog } from './InfoDialog';
+import { RouteInfoDialog } from './RouteInfoDialog';
 import './styles.css';
 
 const lineString = require('@turf/helpers').lineString;
@@ -31,6 +33,7 @@ export default class RouteList extends React.Component {
       notificationSystem: null,
       chat: new Map(),
       selectedChat: { route_id: null, role: null },
+      selectedRoute: {},
       messageDialog: {
         open: false,
         title: 'SELECCIONE EL USUARIO'
@@ -40,6 +43,9 @@ export default class RouteList extends React.Component {
         title: 'Chat'
       },
       infoDialog: {
+        open: false
+      },
+      routeInfoDialog: {
         open: false
       },
     };
@@ -95,6 +101,11 @@ export default class RouteList extends React.Component {
       selectedChat: { ...this.state.selectedChat, role: 'driver' }
     });
   }
+
+  handleCloseRouteInfoDialog() {
+    this.setState({ routeInfoDialog: { ...this.state.routeInfoDialog, open: false } });
+  }
+
   addRouteToMap(route) {
     const router = new L.Routing.OSRMv1({
       serviceUrl: SERVICE_URL
@@ -197,13 +208,13 @@ export default class RouteList extends React.Component {
         } else if (data.outofBuffer === true && route.status !== 'danger') { // ABANDONO DE CERCO
           route.status = 'danger';
           this.forceUpdate(); // refresh the UI
-      this.props.addNotification({
-          sendBy: "Ruta peligrando",
-        position: route.position,
-        client: route.client,
-        driver: route.driver,
-        routeId: route._id
-      });
+          this.props.addNotification({
+            sendBy: 'Ruta peligrando',
+            position: route.position,
+            client: route.client,
+            driver: route.driver,
+            routeId: route._id
+          });
           this.state.notificationSystem.addNotification({
             title: 'ABANDONO DE CERCO',
             level: 'error',
@@ -312,6 +323,13 @@ export default class RouteList extends React.Component {
     });
   }
 
+  handleCheckInfoRoute(evt) {
+    const route = this.props.routes.find(_route => _route._id == evt.currentTarget.getAttribute('route_id'));
+    this.setState({
+      routeInfoDialog: { ...this.state.routeInfoDialog, open: true },
+      selectedRoute: route
+    });
+  }
   sendMessage(evt) {
     let message = {
       from: this.props.user._id,
@@ -372,6 +390,8 @@ export default class RouteList extends React.Component {
     context.handleDriverChat = this.handleDriverChat.bind(this);
     context.sendMessage = this.sendMessage.bind(this);
     context.handleReceiveMessage = this.handleReceiveMessage.bind(this);
+    context.handleCheckInfoRoute = this.handleCheckInfoRoute.bind(this);
+    context.handleCloseRouteInfoDialog = this.handleCloseRouteInfoDialog.bind(this);
   }
 
   render() {
@@ -406,6 +426,13 @@ export default class RouteList extends React.Component {
               >
                 <CommunicationChatBubble />
               </IconButton>
+              <IconButton
+                onClick={this.handleCheckInfoRoute}
+                route_id={route._id}
+                className="iconbutton-custom"
+              >
+                <ActionInfo />
+              </IconButton>
             </ListItem>
           );
         });
@@ -436,6 +463,13 @@ export default class RouteList extends React.Component {
               >
                 <CommunicationChatBubble />
               </IconButton>
+              <IconButton
+                onClick={this.handleCheckInfoRoute}
+                route_id={route._id}
+                className="iconbutton-custom"
+              >
+                <ActionInfo />
+              </IconButton>
             </ListItem>
           );
         });
@@ -446,7 +480,7 @@ export default class RouteList extends React.Component {
         iconClassNameLeft="muidocs-icon-action-home"
       />
       <Tabs>
-        <Tab label="ACTIVAS">
+        <Tab label="NORMALES">
           <div>
             <List ref="routesGreen">
               { routesGreen || 'No generado' }
@@ -482,6 +516,12 @@ this.state.selectedChat.role].toString())}
         open={this.state.infoDialog.open}
         handleClose={this.handleCloseInfoDialog}
       />
+      <RouteInfoDialog
+        open={this.state.routeInfoDialog.open}
+        handleClose={this.handleCloseRouteInfoDialog}
+        route={this.state.selectedRoute}
+      />
+
     </div>
     );
   }
